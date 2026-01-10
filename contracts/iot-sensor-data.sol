@@ -32,8 +32,6 @@ contract IotSensorData {
 
     SystemStateData[] public measurementHistory;
 
-    SystemStateData systemStateData;
-
     event NewMeasurement(
         uint256 indexed timestamp,
         address indexed source,
@@ -41,6 +39,10 @@ contract IotSensorData {
         Action action,
         uint256 measurementIndex
     );
+
+    constructor() {
+        owner = msg.sender;
+    }
 
     // Modifier to validate user identity
     modifier onlyOwner() {
@@ -77,7 +79,12 @@ contract IotSensorData {
             block.timestamp,
             msg.sender,
             _state,
+            _action,
             measurementHistory.length - 1
         );
+    }
+
+    function getMeasurementCount() external view returns (int256) {
+        return measurementHistory.length;
     }
 }
