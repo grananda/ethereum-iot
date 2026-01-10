@@ -84,7 +84,80 @@ contract IotSensorData {
         );
     }
 
-    function getMeasurementCount() external view returns (int256) {
+    function getMeasurementCount() external view returns (uint256) {
         return measurementHistory.length;
     }
+
+    function getLastMeasurement()
+        external
+        view
+        returns (SystemStateData memory)
+    {
+        require(
+            measurementHistory.length > 0,
+            "No available measurements to work with."
+        );
+
+        return measurementHistory[measurementHistory.length - 1];
+    }
+
+    function getMeasurement(
+        uint256 index
+    ) external view returns (SystemStateData memory) {
+        require(
+            index < measurementHistory.length,
+            "Requested index out of bounds."
+        );
+
+        return measurementHistory[index];
+    }
+
+    function getFirstNMeasurements(
+        uint256 n
+    ) external view returns (SystemStateData[] memory) {
+        uint256 count = n > measurementHistory.length
+            ? measurementHistory.length
+            : n;
+
+        SystemStateData[] memory res = new SystemStateData[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            res[i] = measurementHistory[i];
+        }
+
+        return res;
+    }
+
+    function getLastNMeasurements(
+        uint256 n
+    ) external view returns (SystemStateData[] memory) {
+        uint256 count = n > measurementHistory.length
+            ? measurementHistory.length
+            : n;
+
+        SystemStateData[] memory res = new SystemStateData[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            res[i] = measurementHistory[i];
+        }
+
+        return res;
+    }
+
+    function getMeasurementsBetweenDates(
+        int256 startTime,
+        int256 endTime
+    ) external view returns (SystemStateData[] memory) {}
+
+    function getAverageTemperature(int256 n) external view returns (int256) {}
+
+    function getAverageHumidity(int256 n) external view returns (int256) {}
+
+    function getMeasurementsByState(
+        State state
+    ) external view returns (SystemStateData[] memory) {}
+
+    function deleteMeasurement(int256 index) external onlyOwner {}
+
+    function transferOwnership(address newOwner) external onlyOwner {}
 }
