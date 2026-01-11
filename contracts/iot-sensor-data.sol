@@ -31,6 +31,7 @@ contract IotSensorData {
         uint256 volume; // Substance volume in liters
         uint256 ph; // Substance pH
         uint256 color; // Substance color as RGB code
+        uint256 availableStock; // Available stock in liters
         State state; // Current state of the system
         Action action; // Action taken in relation to current system state
     }
@@ -50,11 +51,14 @@ contract IotSensorData {
         uint256 measurementIndex
     );
 
-    event lowInventoryEvent(uint256 amountUsed, uint256 thresholdAmount);
+    event lowInventoryEvent(
+        uint256 amountUsed,
+        uint256 thresholdAmount,
+        uint256 indexed timestamp,
+        uint256 indexed index
+    );
 
-    uint256 private constant inventoryStockAmountThreshold = 1000; // Amount of substance used that will trigger a short inventory event in liters.
-    uint256 private constant fullTankVolume = 100; // Volume of tank when full in liters.
-    uint256 private constant emptyTankVolume = 10; // Volume of tank to be considered as empty in liters.
+    uint256 private constant inventoryStockAmountThreshold = 100; // Minimum volume threshold to consider low inventory in liters.
 
     constructor() {
         owner = msg.sender;
@@ -75,6 +79,7 @@ contract IotSensorData {
         uint256 _volume,
         uint256 _ph,
         uint256 _color,
+        uint256 _availableStock,
         State _state,
         Action _action
     ) public onlyOwner {
@@ -88,6 +93,7 @@ contract IotSensorData {
             volume: _volume,
             ph: _ph,
             color: _color,
+            availableStock: _availableStock,
             state: _state,
             action: _action
         });
@@ -102,6 +108,15 @@ contract IotSensorData {
             _action,
             measurementHistory.length - 1
         );
+
+        if (_availableStock < inventoryStockAmountThreshold) {
+            emit lowInventoryEvent(
+                _availableStock,
+                inventoryStockAmountThreshold,
+                block.timestamp,
+                measurementHistory.length - 1
+            );
+        }
     }
 
     // Returns total records stored in measurement history.
