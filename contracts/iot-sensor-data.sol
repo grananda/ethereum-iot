@@ -137,27 +137,214 @@ contract IotSensorData {
 
         SystemStateData[] memory res = new SystemStateData[](count);
 
+        uint256 startIndex = measurementHistory.length - count;
+
         for (uint256 i = 0; i < count; i++) {
-            res[i] = measurementHistory[i];
+            res[i] = measurementHistory[startIndex + i];
         }
 
         return res;
     }
 
     function getMeasurementsBetweenDates(
-        int256 startTime,
-        int256 endTime
-    ) external view returns (SystemStateData[] memory) {}
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (SystemStateData[] memory) {
+        require(startTime <= endTime, "Invalid time range.");
 
-    function getAverageTemperature(int256 n) external view returns (int256) {}
+        uint256 count = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) count++;
+        }
 
-    function getAverageHumidity(int256 n) external view returns (int256) {}
+        SystemStateData[] memory res = new SystemStateData[](count);
+
+        uint256 index = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                res[index] = measurementHistory[i];
+                index++;
+            }
+        }
+
+        return res;
+    }
+
+    function getAverageTemperature(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        require(startTime <= endTime, "Invalid time range.");
+
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].temperature;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
+
+    function getAverageHumidity(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].humidity;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
+
+    function getAverageConductivity(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].conductivity;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
+
+    function getAverageDensity(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].density;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
+
+    function getAverageWeight(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].weight;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
+
+    function getAverageVolume(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (int256) {
+        int256 count = 0;
+        int256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].volume;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        int256 average = acc / count;
+
+        return average;
+    }
 
     function getMeasurementsByState(
         State state
-    ) external view returns (SystemStateData[] memory) {}
+    ) external view returns (SystemStateData[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            if (measurementHistory[i].state == state) count++;
+        }
 
-    function deleteMeasurement(int256 index) external onlyOwner {}
+        SystemStateData[] memory res = new SystemStateData[](count);
 
-    function transferOwnership(address newOwner) external onlyOwner {}
+        uint256 index = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            if (measurementHistory[i].state == state) {
+                res[index] = measurementHistory[i];
+                index++;
+            }
+        }
+
+        return res;
+    }
+
+    function getMeasurementsByAction(
+        Action action
+    ) external view returns (SystemStateData[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            if (measurementHistory[i].action == action) count++;
+        }
+
+        SystemStateData[] memory res = new SystemStateData[](count);
+
+        uint256 index = 0;
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            if (measurementHistory[i].action == action) {
+                res[index] = measurementHistory[i];
+                index++;
+            }
+        }
+
+        return res;
+    }
 }
