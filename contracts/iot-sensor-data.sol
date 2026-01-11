@@ -1,37 +1,45 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
+// The following contract stores in a blockchain a set of data related to the physical state of a chemical reactive or substance.
 contract IotSensorData {
+    // Enum structure that defines the state of the system at data collection time.
     enum State {
         NORMAL,
         EMPTY,
         CORRUPTED,
         UNDEFINED
     }
+
+    // Enum structure that defines if an action was taken at data collection time.
     enum Action {
         FILL,
         EMPTY,
         NONE
     }
 
+    // Structure that defines the data defining the state of the system at a specific time.
+    // All data values are represented as integer and must be divided by 100 to obtain the correct float value.
     struct SystemStateData {
-        uint256 timeStamp;
-        address source;
-        int256 temperature;
-        int256 humidity;
-        int256 density;
-        int256 conductivity;
-        int256 weight;
-        int256 volume;
-        State state;
-        Action action;
+        uint256 timeStamp; // Time for data collection
+        address source; // Device ID for the reported data
+        int256 temperature; // System temperature in Celsius
+        int256 density; // Substance density in g/cm3
+        int256 conductivity; // Substance conductivity in uS/cm
+        int256 weight; // Substance weight in gm;
+        int256 volume; // Substance volume in cm3
+        State state; // Current state of the system
+        Action action; // Action taken in relation to current system state
     }
 
+    // Defines the owner for the data transaction.
     address public owner;
 
+    // Data structure to hold all registered measurements.
     SystemStateData[] public measurementHistory;
 
+    // Contract event to be triggered when a new system measurement is registered.
     event NewMeasurement(
         uint256 indexed timestamp,
         address indexed source,
@@ -44,15 +52,15 @@ contract IotSensorData {
         owner = msg.sender;
     }
 
-    // Modifier to validate user identity
+    // Guard that guarantees certain actions are only executed by contract owner.
     modifier onlyOwner() {
         require(msg.sender == owner, "Action only allowed by owner"); // Verify message sender is owner
         _; // Execute requested method
     }
 
+    // Add a new measurement to the history and register the data in the blockchain.
     function addMeasurement(
         int256 _temperature,
-        int256 _humidity,
         int256 _density,
         int256 _conductivity,
         int256 _weight,
@@ -64,7 +72,6 @@ contract IotSensorData {
             timeStamp: block.timestamp,
             source: msg.sender,
             temperature: _temperature,
-            humidity: _humidity,
             density: _density,
             conductivity: _conductivity,
             weight: _weight,
@@ -73,8 +80,9 @@ contract IotSensorData {
             action: _action
         });
 
-        measurementHistory.push(newDataEntry);
+        measurementHistory.push(newDataEntry); // Data is registered in the blockchain.
 
+        // Event that notifies listeners of new data being registered.
         emit NewMeasurement(
             block.timestamp,
             msg.sender,
@@ -84,10 +92,12 @@ contract IotSensorData {
         );
     }
 
+    // Returns total records stored in measurement history.
     function getMeasurementCount() external view returns (uint256) {
         return measurementHistory.length;
     }
 
+    // Returns last record stored in measurement history.
     function getLastMeasurement()
         external
         view
@@ -101,6 +111,7 @@ contract IotSensorData {
         return measurementHistory[measurementHistory.length - 1];
     }
 
+    // Returns specific record by index stored in measurement history.
     function getMeasurement(
         uint256 index
     ) external view returns (SystemStateData memory) {
@@ -112,6 +123,7 @@ contract IotSensorData {
         return measurementHistory[index];
     }
 
+    // Returns first N records stored in measurement history.
     function getFirstNMeasurements(
         uint256 n
     ) external view returns (SystemStateData[] memory) {
@@ -128,6 +140,7 @@ contract IotSensorData {
         return res;
     }
 
+    // Returns last N records stored in measurement history.
     function getLastNMeasurements(
         uint256 n
     ) external view returns (SystemStateData[] memory) {
@@ -146,6 +159,7 @@ contract IotSensorData {
         return res;
     }
 
+    // Returns all records stored between certain dates in measurement history.
     function getMeasurementsBetweenDates(
         uint256 startTime,
         uint256 endTime
@@ -172,6 +186,7 @@ contract IotSensorData {
         return res;
     }
 
+    // Returns average temperature between certain dates in measurement history.
     function getAverageTemperature(
         uint256 startTime,
         uint256 endTime
@@ -196,28 +211,7 @@ contract IotSensorData {
         return average;
     }
 
-    function getAverageHumidity(
-        uint256 startTime,
-        uint256 endTime
-    ) external view returns (int256) {
-        int256 count = 0;
-        int256 acc = 0;
-
-        for (uint256 i = 0; i < measurementHistory.length; i++) {
-            uint256 timeStamp = measurementHistory[i].timeStamp;
-            if (timeStamp >= startTime && timeStamp <= endTime) {
-                acc += measurementHistory[i].humidity;
-                count++;
-            }
-        }
-
-        require(count > 0, "No available measurements");
-
-        int256 average = acc / count;
-
-        return average;
-    }
-
+    // Returns average conductivity between certain dates in measurement history.
     function getAverageConductivity(
         uint256 startTime,
         uint256 endTime
@@ -240,6 +234,7 @@ contract IotSensorData {
         return average;
     }
 
+    // Returns average density between certain dates in measurement history.
     function getAverageDensity(
         uint256 startTime,
         uint256 endTime
@@ -262,6 +257,7 @@ contract IotSensorData {
         return average;
     }
 
+    // Returns average weight between certain dates in measurement history.
     function getAverageWeight(
         uint256 startTime,
         uint256 endTime
@@ -284,6 +280,7 @@ contract IotSensorData {
         return average;
     }
 
+    // Returns average volume between certain dates in measurement history.
     function getAverageVolume(
         uint256 startTime,
         uint256 endTime
@@ -306,19 +303,32 @@ contract IotSensorData {
         return average;
     }
 
+    // Returns all records by state between certain dates in measurement history.
     function getMeasurementsByState(
-        State state
+        State state,
+        uint256 startTime,
+        uint256 endTime
     ) external view returns (SystemStateData[] memory) {
         uint256 count = 0;
         for (uint256 i = 0; i < measurementHistory.length; i++) {
-            if (measurementHistory[i].state == state) count++;
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (
+                measurementHistory[i].state == state &&
+                timeStamp >= startTime &&
+                timeStamp <= endTime
+            ) count++;
         }
 
         SystemStateData[] memory res = new SystemStateData[](count);
 
         uint256 index = 0;
         for (uint256 i = 0; i < measurementHistory.length; i++) {
-            if (measurementHistory[i].state == state) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (
+                measurementHistory[i].state == state &&
+                timeStamp >= startTime &&
+                timeStamp <= endTime
+            ) {
                 res[index] = measurementHistory[i];
                 index++;
             }
@@ -327,19 +337,32 @@ contract IotSensorData {
         return res;
     }
 
+    // Returns all records by action taken between certain dates in measurement history.
     function getMeasurementsByAction(
-        Action action
+        Action action,
+        uint256 startTime,
+        uint256 endTime
     ) external view returns (SystemStateData[] memory) {
         uint256 count = 0;
         for (uint256 i = 0; i < measurementHistory.length; i++) {
-            if (measurementHistory[i].action == action) count++;
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (
+                measurementHistory[i].action == action &&
+                timeStamp >= startTime &&
+                timeStamp <= endTime
+            ) count++;
         }
 
         SystemStateData[] memory res = new SystemStateData[](count);
 
         uint256 index = 0;
         for (uint256 i = 0; i < measurementHistory.length; i++) {
-            if (measurementHistory[i].action == action) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (
+                measurementHistory[i].action == action &&
+                timeStamp >= startTime &&
+                timeStamp <= endTime
+            ) {
                 res[index] = measurementHistory[i];
                 index++;
             }
