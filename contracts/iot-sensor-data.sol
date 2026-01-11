@@ -25,10 +25,12 @@ contract IotSensorData {
         uint256 timeStamp; // Time for data collection
         address source; // Device ID for the reported data
         int256 temperature; // System temperature in Celsius
-        int256 density; // Substance density in g/cm3
+        uint256 density; // Substance density in g/L
         int256 conductivity; // Substance conductivity in uS/cm
-        int256 weight; // Substance weight in gm;
-        int256 volume; // Substance volume in cm3
+        uint256 weight; // Substance weight in grams
+        uint256 volume; // Substance volume in liters
+        uint256 ph; // Substance pH
+        uint256 color; // Substance color as RGB code
         State state; // Current state of the system
         Action action; // Action taken in relation to current system state
     }
@@ -48,6 +50,12 @@ contract IotSensorData {
         uint256 measurementIndex
     );
 
+    event lowInventoryEvent(uint256 amountUsed, uint256 thresholdAmount);
+
+    uint256 private constant inventoryStockAmountThreshold = 1000; // Amount of substance used that will trigger a short inventory event in liters.
+    uint256 private constant fullTankVolume = 100; // Volume of tank when full in liters.
+    uint256 private constant emptyTankVolume = 10; // Volume of tank to be considered as empty in liters.
+
     constructor() {
         owner = msg.sender;
     }
@@ -61,10 +69,12 @@ contract IotSensorData {
     // Add a new measurement to the history and register the data in the blockchain.
     function addMeasurement(
         int256 _temperature,
-        int256 _density,
+        uint256 _density,
         int256 _conductivity,
-        int256 _weight,
-        int256 _volume,
+        uint256 _weight,
+        uint256 _volume,
+        uint256 _ph,
+        uint256 _color,
         State _state,
         Action _action
     ) public onlyOwner {
@@ -76,6 +86,8 @@ contract IotSensorData {
             conductivity: _conductivity,
             weight: _weight,
             volume: _volume,
+            ph: _ph,
+            color: _color,
             state: _state,
             action: _action
         });
@@ -238,9 +250,9 @@ contract IotSensorData {
     function getAverageDensity(
         uint256 startTime,
         uint256 endTime
-    ) external view returns (int256) {
-        int256 count = 0;
-        int256 acc = 0;
+    ) external view returns (uint256) {
+        uint256 count = 0;
+        uint256 acc = 0;
 
         for (uint256 i = 0; i < measurementHistory.length; i++) {
             uint256 timeStamp = measurementHistory[i].timeStamp;
@@ -252,7 +264,7 @@ contract IotSensorData {
 
         require(count > 0, "No available measurements");
 
-        int256 average = acc / count;
+        uint256 average = acc / count;
 
         return average;
     }
@@ -261,9 +273,9 @@ contract IotSensorData {
     function getAverageWeight(
         uint256 startTime,
         uint256 endTime
-    ) external view returns (int256) {
-        int256 count = 0;
-        int256 acc = 0;
+    ) external view returns (uint256) {
+        uint256 count = 0;
+        uint256 acc = 0;
 
         for (uint256 i = 0; i < measurementHistory.length; i++) {
             uint256 timeStamp = measurementHistory[i].timeStamp;
@@ -275,7 +287,7 @@ contract IotSensorData {
 
         require(count > 0, "No available measurements");
 
-        int256 average = acc / count;
+        uint256 average = acc / count;
 
         return average;
     }
@@ -284,9 +296,9 @@ contract IotSensorData {
     function getAverageVolume(
         uint256 startTime,
         uint256 endTime
-    ) external view returns (int256) {
-        int256 count = 0;
-        int256 acc = 0;
+    ) external view returns (uint256) {
+        uint256 count = 0;
+        uint256 acc = 0;
 
         for (uint256 i = 0; i < measurementHistory.length; i++) {
             uint256 timeStamp = measurementHistory[i].timeStamp;
@@ -298,7 +310,53 @@ contract IotSensorData {
 
         require(count > 0, "No available measurements");
 
-        int256 average = acc / count;
+        uint256 average = acc / count;
+
+        return average;
+    }
+
+    // Returns average ph between certain dates in measurement history.
+    function getAveragePH(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (uint256) {
+        uint256 count = 0;
+        uint256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].ph;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        uint256 average = acc / count;
+
+        return average;
+    }
+
+    // Returns average color between certain dates in measurement history.
+    function getAverageColor(
+        uint256 startTime,
+        uint256 endTime
+    ) external view returns (uint256) {
+        uint256 count = 0;
+        uint256 acc = 0;
+
+        for (uint256 i = 0; i < measurementHistory.length; i++) {
+            uint256 timeStamp = measurementHistory[i].timeStamp;
+            if (timeStamp >= startTime && timeStamp <= endTime) {
+                acc += measurementHistory[i].color;
+                count++;
+            }
+        }
+
+        require(count > 0, "No available measurements");
+
+        uint256 average = acc / count;
 
         return average;
     }
