@@ -58,7 +58,7 @@ contract IotSensorData {
         address source,
         bytes32 indexed device,
         uint256 indexed measurementIndex,
-        uint256 amountUsed,
+        uint256 availableStock,
         uint256 thresholdAmount
     );
 
