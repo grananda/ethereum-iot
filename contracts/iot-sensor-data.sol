@@ -62,7 +62,7 @@ contract IotSensorData {
         uint256 thresholdAmount
     );
 
-    uint256 private constant inventoryStockAmountThreshold = 10000; // Minimum volume threshold to consider low inventory in liters x 100.
+    uint256 private constant inventoryStockAmountThreshold = 10000; // Minimum volume threshold to consider low inventory in liters x.
 
     constructor() {
         owner = msg.sender;
@@ -87,7 +87,7 @@ contract IotSensorData {
         uint256 _availableStock,
         State _state,
         Action _action
-    ) public onlyOwner {
+    ) external onlyOwner {
         SystemStateData memory newDataEntry = SystemStateData({
             timeStamp: block.timestamp,
             source: msg.sender,
