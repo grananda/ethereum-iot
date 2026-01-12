@@ -23,7 +23,8 @@ contract IotSensorData {
     // All data values are represented as integer and must be divided by 100 to obtain the correct float value.
     struct SystemStateData {
         uint256 timeStamp; // Time for data collection
-        address source; // Device ID for the reported data
+        address source; // Source address for the reported data
+        bytes32 device; // Device ID of the reported data
         int256 temperature; // System temperature in Celsius
         uint256 density; // Substance density in g/L
         int256 conductivity; // Substance conductivity in uS/cm
@@ -46,16 +47,19 @@ contract IotSensorData {
     event NewMeasurement(
         uint256 indexed timestamp,
         address indexed source,
+        bytes32 indexed device,
+        uint256 measurementIndex,
         State state,
-        Action action,
-        uint256 measurementIndex
+        Action action
     );
 
     event lowInventoryEvent(
-        uint256 amountUsed,
-        uint256 thresholdAmount,
         uint256 indexed timestamp,
-        uint256 indexed index
+        address source,
+        bytes32 indexed device,
+        uint256 indexed measurementIndex,
+        uint256 amountUsed,
+        uint256 thresholdAmount
     );
 
     uint256 private constant inventoryStockAmountThreshold = 100; // Minimum volume threshold to consider low inventory in liters.
@@ -72,6 +76,7 @@ contract IotSensorData {
 
     // Add a new measurement to the history and register the data in the blockchain.
     function addMeasurement(
+        bytes32 _device,
         int256 _temperature,
         uint256 _density,
         int256 _conductivity,
@@ -82,10 +87,11 @@ contract IotSensorData {
         uint256 _availableStock,
         State _state,
         Action _action
-    ) public onlyOwner {
+    ) external onlyOwner {
         SystemStateData memory newDataEntry = SystemStateData({
             timeStamp: block.timestamp,
             source: msg.sender,
+            device: _device,
             temperature: _temperature,
             density: _density,
             conductivity: _conductivity,
@@ -104,18 +110,21 @@ contract IotSensorData {
         emit NewMeasurement(
             block.timestamp,
             msg.sender,
+            _device,
+            measurementHistory.length - 1,
             _state,
-            _action,
-            measurementHistory.length - 1
+            _action
         );
 
         if (_availableStock < inventoryStockAmountThreshold) {
             // Event that notifies when stock is below admitted threshold
             emit lowInventoryEvent(
-                _availableStock,
-                inventoryStockAmountThreshold,
                 block.timestamp,
-                measurementHistory.length - 1
+                msg.sender,
+                _device,
+                measurementHistory.length - 1,
+                _availableStock,
+                inventoryStockAmountThreshold
             );
         }
     }
