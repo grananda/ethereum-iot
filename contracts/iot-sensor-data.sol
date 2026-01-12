@@ -110,6 +110,7 @@ contract IotSensorData {
         );
 
         if (_availableStock < inventoryStockAmountThreshold) {
+            // Event that notifies when stock is below admitted threshold
             emit lowInventoryEvent(
                 _availableStock,
                 inventoryStockAmountThreshold,
