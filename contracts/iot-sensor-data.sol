@@ -14,9 +14,9 @@ contract IotSensorData {
 
     // Enum structure that defines if an action was taken at data collection time.
     enum Action {
+        NONE,
         FILL,
-        EMPTY,
-        NONE
+        FLUSH
     }
 
     // Structure that defines the data defining the state of the system at a specific time.
@@ -62,7 +62,7 @@ contract IotSensorData {
         uint256 thresholdAmount
     );
 
-    uint256 private constant inventoryStockAmountThreshold = 100; // Minimum volume threshold to consider low inventory in liters.
+    uint256 private constant inventoryStockAmountThreshold = 10000; // Minimum volume threshold to consider low inventory in liters x 100.
 
     constructor() {
         owner = msg.sender;
@@ -87,7 +87,7 @@ contract IotSensorData {
         uint256 _availableStock,
         State _state,
         Action _action
-    ) external onlyOwner {
+    ) public onlyOwner {
         SystemStateData memory newDataEntry = SystemStateData({
             timeStamp: block.timestamp,
             source: msg.sender,
